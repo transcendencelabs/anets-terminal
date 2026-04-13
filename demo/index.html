@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AnetsTerminal Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #1a1a2e;
+      color: #e0e0e0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 28px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #528bff, #c678dd);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      color: #888;
+      margin-bottom: 24px;
+      font-size: 14px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .controls button, .controls select {
+      padding: 8px 16px;
+      border: 1px solid #444;
+      border-radius: 6px;
+      background: #2a2a3e;
+      color: #ddd;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .controls button:hover {
+      background: #3a3a5e;
+      border-color: #528bff;
+    }
+
+    .controls select {
+      appearance: auto;
+    }
+
+    .terminal-wrapper {
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .terminal-titlebar {
+      background: #2a2a3e;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #1a1a2e;
+    }
+
+    .terminal-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .dot-red { background: #ff5f57; }
+    .dot-yellow { background: #febc2e; }
+    .dot-green { background: #28c840; }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: #888;
+      font-family: monospace;
+    }
+
+    #terminal-container {
+      display: inline-block;
+    }
+
+    .info {
+      margin-top: 20px;
+      color: #666;
+      font-size: 12px;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    .info code {
+      background: #2a2a3e;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .api-section {
+      margin-top: 24px;
+      max-width: 700px;
+      width: 100%;
+    }
+
+    .api-section h2 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #aaa;
+    }
+
+    .api-section pre {
+      background: #2a2a3e;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .api-section pre code {
+      background: none;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>AnetsTerminal</h1>
+  <p class="subtitle">An embeddable web-based terminal emulator</p>
+
+  <div class="controls">
+    <select id="theme-select">
+      <option value="default">Default Theme</option>
+      <option value="one-dark">One Dark</option>
+      <option value="solarized">Solarized Dark</option>
+      <option value="dracula">Dracula</option>
+    </select>
+    <button id="btn-clear">Clear</button>
+    <button id="btn-reset">Reset</button>
+    <button id="btn-demo">Run Demo</button>
+    <button id="btn-resize">Resize 40x12</button>
+    <button id="btn-resize-back">Resize 80x24</button>
+  </div>
+
+  <div class="terminal-wrapper">
+    <div class="terminal-titlebar">
+      <div class="terminal-dot dot-red"></div>
+      <div class="terminal-dot dot-yellow"></div>
+      <div class="terminal-dot dot-green"></div>
+      <span class="terminal-title" id="term-title">anets-terminal</span>
+    </div>
+    <div id="terminal-container"></div>
+  </div>
+
+  <div class="info">
+    <strong>Embeddable terminal emulator</strong> — zero dependencies, Canvas-based rendering,
+    full ANSI color support (16-color, 256-color, true color), scrollback, mouse selection,
+    cursor styles, and a complete xterm.js-compatible API.
+  </div>
+
+  <div class="api-section">
+    <h2>Quick Start</h2>
+    <pre><code>// Import
+const term = new AnetsTerminal({ cols: 80, rows: 24 });
+
+// Mount to DOM
+term.open(document.getElementById('terminal'));
+
+// Write output
+term.write('\x1b[32mHello, World!\x1b[0m\r\n');
+
+// Handle user input
+term.on(TerminalEvent.Data, data => {
+  // Send data to your backend/PTY
+  websocket.send(data);
+});
+
+// Receive output from backend
+websocket.onmessage = (e) => {
+  term.write(e.data);
+};</code></pre>
+  </div>
+
+  <script src="anets-terminal.js"></script>
+  <script>
+    // Create terminal instance
+    const term = new AnetsTerminal.AnetsTerminal({
+      cols: 80,
+      rows: 24,
+      cursorBlink: true,
+      cursorStyle: 'block',
+      focusOnOpen: true,
+      theme: AnetsTerminal.DEFAULT_THEME,
+    });
+
+    // Open in container
+    term.open(document.getElementById('terminal-container'));
+
+    // Simulated shell state
+    let inputBuffer = '';
+    let commandHistory = [];
+    let historyIndex = -1;
+    let promptStr = '\x1b[32mguest@anets\x1b[0m:\x1b[34m~\x1b[0m$ ';
+
+    // Write initial prompt
+    term.write(promptStr);
+
+    // Handle user input
+    term.on(AnetsTerminal.TerminalEvent.Data, function(data) {
+      // Forward to simulated shell
+      handleShellInput(data);
+    });
+
+    // Handle title changes
+    term.on(AnetsTerminal.TerminalEvent.Title, function(title) {
+      document.getElementById('term-title').textContent = title;
+    });
+
+    // =============================================
+    // Simulated Shell
+    // =============================================
+
+    function handleShellInput(data) {
+      for (let i = 0; i < data.length; i++) {
+        const ch = data.charCodeAt(i);
+
+        if (ch === 0x0d) { // Enter
+          term.write('\r\n');
+          executeCommand(inputBuffer.trim());
+          inputBuffer = '';
+          historyIndex = -1;
+        } else if (ch === 0x7f) { // Backspace
+          if (inputBuffer.length > 0) {
+            inputBuffer = inputBuffer.slice(0, -1);
+            term.write('\b \b');
+          }
+        } else if (ch === 0x09) { // Tab
+          // Simple tab completion
+          const completion = tabComplete(inputBuffer);
+          if (completion) {
+            term.write(completion);
+            inputBuffer += completion;
+          }
+        } else if (data === '\x1b[A') { // Up arrow
+          if (commandHistory.length > 0) {
+            if (historyIndex < commandHistory.length - 1) {
+              historyIndex++;
+            }
+            // Clear current input
+            const clearLen = inputBuffer.length;
+            for (let j = 0; j < clearLen; j++) {
+              term.write('\b \b');
+            }
+            inputBuffer = commandHistory[commandHistory.length - 1 - historyIndex] || '';
+            term.write(inputBuffer);
+          }
+          return;
+        } else if (data === '\x1b[B') { // Down arrow
+          if (historyIndex > 0) {
+            historyIndex--;
+            const clearLen = inputBuffer.length;
+            for (let j = 0; j < clearLen; j++) {
+              term.write('\b \b');
+            }
+            inputBuffer = commandHistory[commandHistory.length - 1 - historyIndex] || '';
+            term.write(inputBuffer);
+          } else if (historyIndex === 0) {
+            historyIndex = -1;
+            const clearLen = inputBuffer.length;
+            for (let j = 0; j < clearLen; j++) {
+              term.write('\b \b');
+            }
+            inputBuffer = '';
+          }
+          return;
+        } else if (ch === 0x03) { // Ctrl+C
+          term.write('^C\r\n');
+          term.write(promptStr);
+          inputBuffer = '';
+        } else if (ch >= 0x20) { // Printable characters
+          inputBuffer += data[i];
+          term.write(data[i]);
+        }
+      }
+    }
+
+    function tabComplete(input) {
+      const commands = ['help', 'echo', 'clear', 'date', 'whoami', 'pwd', 'ls', 
+                        'uname', 'uptime', 'colors', 'theme', 'banner', 'cowsay',
+                        'matrix', 'neofetch', 'resize', 'history'];
+      const matches = commands.filter(c => c.startsWith(input.trim()));
+      if (matches.length === 1) {
+        return matches[0].slice(input.trim().length) + ' ';
+      }
+      return '';
+    }
+
+    function executeCommand(cmd) {
+      if (!cmd) {
+        term.write(promptStr);
+        return;
+      }
+
+      commandHistory.push(cmd);
+      
+      const parts = cmd.split(/\s+/);
+      const command = parts[0].toLowerCase();
+      const args = parts.slice(1);
+
+      switch (command) {
+        case 'help':
+          term.writeln('\x1b[1;33mAvailable Commands:\x1b[0m');
+          term.writeln('  \x1b[32mhelp\x1b[0m      - Show this help message');
+          term.writeln('  \x1b[32mecho\x1b[0m      - Echo text back');
+          term.writeln('  \x1b[32mclear\x1b[0m     - Clear the terminal');
+          term.writeln('  \x1b[32mdate\x1b[0m      - Show current date/time');
+          term.writeln('  \x1b[32mwhoami\x1b[0m    - Show current user');
+          term.writeln('  \x1b[32mpwd\x1b[0m       - Print working directory');
+          term.writeln('  \x1b[32mls\x1b[0m        - List files');
+          term.writeln('  \x1b[32muname\x1b[0m     - System information');
+          term.writeln('  \x1b[32mcolors\x1b[0m    - Display color palette');
+          term.writeln('  \x1b[32mbanner\x1b[0m    - Show ASCII banner');
+          term.writeln('  \x1b[32mcowsay\x1b[0m    - Cowsay!');
+          term.writeln('  \x1b[32mneofetch\x1b[0m  - System info display');
+          term.writeln('  \x1b[32mmatrix\x1b[0m    - Matrix rain effect');
+          term.writeln('  \x1b[32mhistory\x1b[0m   - Command history');
+          term.writeln('  \x1b[32mresize\x1b[0m    - Resize terminal (cols rows)');
+          break;
+
+        case 'echo':
+          term.writeln(args.join(' '));
+          break;
+
+        case 'clear':
+          term.clear();
+          break;
+
+        case 'date':
+          term.writeln('\x1b[36m' + new Date().toString() + '\x1b[0m');
+          break;
+
+        case 'whoami':
+          term.writeln('\x1b[33mguest\x1b[0m');
+          break;
+
+        case 'pwd':
+          term.writeln('\x1b[34m/home/guest\x1b[0m');
+          break;
+
+        case 'ls':
+          term.writeln('\x1b[34m.\x1b[0m  \x1b[34m..\x1b[0m  \x1b[32m.bashrc\x1b[0m  \x1b[32m.config\x1b[0m  \x1b[33mdocuments\x1b[0m  \x1b[33mdownloads\x1b[0m  \x1b[37mreadme.md\x1b[0m');
+          break;
+
+        case 'uname':
+          term.writeln('AnetsOS 1.0.0 x86_64 Web/Browser');
+          break;
+
+        case 'uptime':
+          const uptime = Math.floor(performance.now() / 1000);
+          const mins = Math.floor(uptime / 60);
+          const secs = uptime % 60;
+          term.writeln(`up ${mins} min ${secs} sec`);
+          break;
+
+        case 'colors':
+          showColors();
+          break;
+
+        case 'banner':
+          showBanner();
+          break;
+
+        case 'cowsay':
+          const text = args.join(' ') || 'Moo!';
+          const line = '-'.repeat(text.length + 2);
+          term.writeln(' ' + line);
+          term.writeln('< ' + text + ' >');
+          term.writeln(' ' + line);
+          term.writeln('        \\   ^__^');
+          term.writeln('         \\  (oo)\\_______');
+          term.writeln('            (__)\\       )\\/\\');
+          term.writeln('                ||----w |');
+          term.writeln('                ||     ||');
+          break;
+
+        case 'neofetch':
+          showNeofetch();
+          break;
+
+        case 'matrix':
+          runMatrix();
+          break;
+
+        case 'history':
+          commandHistory.forEach((cmd, i) => {
+            term.writeln(`  ${i + 1}  ${cmd}`);
+          });
+          break;
+
+        case 'resize':
+          if (args.length >= 2) {
+            const cols = parseInt(args[0]) || 80;
+            const rows = parseInt(args[1]) || 24;
+            term.resize(Math.max(20, Math.min(cols, 200)), Math.max(5, Math.min(rows, 60)));
+            term.writeln(`Resized to ${cols}x${rows}`);
+          } else {
+            term.writeln('Usage: resize <cols> <rows>');
+          }
+          break;
+
+        default:
+          term.writeln(`\x1b[31mcommand not found: ${command}\x1b[0m`);
+          break;
+      }
+
+      term.write(promptStr);
+    }
+
+    function showColors() {
+      // Standard 16 colors
+      term.writeln('\x1b[1mStandard Colors:\x1b[0m');
+      const names = ['Black', 'Red', 'Green', 'Yellow', 'Blue', 'Magenta', 'Cyan', 'White'];
+      for (let i = 0; i < 8; i++) {
+        term.write(`\x1b[${30 + i}m████ ${names[i]}\x1b[0m  `);
+      }
+      term.writeln('');
+      term.writeln('\x1b[1mBright Colors:\x1b[0m');
+      for (let i = 0; i < 8; i++) {
+        term.write(`\x1b[${90 + i}m████ ${names[i]}\x1b[0m  `);
+      }
+      term.writeln('');
+
+      // 256 color cube
+      term.writeln('\x1b[1m256-Color Cube (6x6x6):\x1b[0m');
+      for (let g = 0; g < 6; g++) {
+        for (let r = 0; r < 6; r++) {
+          for (let b = 0; b < 6; b++) {
+            const idx = 16 + r * 36 + g * 6 + b;
+            term.write(`\x1b[48;5;${idx}m  \x1b[0m`);
+          }
+          term.write(' ');
+        }
+        term.writeln('');
+      }
+
+      // True color demo
+      term.writeln('\x1b[1mTrue Color Gradient:\x1b[0m');
+      for (let i = 0; i < 40; i++) {
+        const r = Math.round(255 * (i / 39));
+        const g = Math.round(128 + 127 * Math.sin(i * Math.PI / 39));
+        const b = Math.round(255 * (1 - i / 39));
+        term.write(`\x1b[48;2;${r};${g};${b}m \x1b[0m`);
+      }
+      term.writeln('');
+    }
+
+    function showBanner() {
+      term.writeln('\x1b[35m');
+      term.writeln('     _              _               _           _            ');
+      term.writeln('    / \\   _ __ ___ | |__   ___ _ __| | __ _  __| | __ _  ___ ');
+      term.writeln('   / _ \\ | \'_ ` _ \\| \'_ \\ / _ \\ \'__| |/ _` |/ _` |/ _` |/ _ \\');
+      term.writeln('  / ___ \\| | | | | | |_) |  __/ |  | | (_| | (_| | (_| |  __/');
+      term.writeln(' /_/   \\_\\_| |_| |_|_.__/ \\___|_|  |_|\\__,_|\\__,_|\\__,_|\\___|');
+      term.writeln('\x1b[0m');
+      term.writeln('  \x1b[2mAn embeddable web terminal emulator\x1b[0m');
+      term.writeln('');
+    }
+
+    function showNeofetch() {
+      const info = [
+        ['\x1b[35mguest\x1b[0m@\x1b[35manets\x1b[0m', ''],
+        ['─────────────', ''],
+        ['\x1b[33mOS\x1b[0m', 'AnetsOS 1.0 x86_64'],
+        ['\x1b[33mHost\x1b[0m', 'Web Browser'],
+        ['\x1b[33mKernel\x1b[0m', 'JavaScript ES2020'],
+        ['\x1b[33mUptime\x1b[0m', Math.floor(performance.now() / 60000) + ' mins'],
+        ['\x1b[33mShell\x1b[0m', 'anets-sh 1.0'],
+        ['\x1b[33mTerminal\x1b[0m', 'AnetsTerminal'],
+        ['\x1b[33mResolution\x1b[0m', window.innerWidth + 'x' + window.innerHeight],
+        ['\x1b[33mTheme\x1b[0m', document.getElementById('theme-select').value],
+        ['\x1b[33mMemory\x1b[0m', Math.round(performance.memory?.usedJSHeapSize / 1048576 || 0) + ' MB'],
+      ];
+
+      const logo = [
+        '\x1b[35m       ___       \x1b[0m',
+        '\x1b[35m      /   \\      \x1b[0m',
+        '\x1b[35m     / A T \\     \x1b[0m',
+        '\x1b[35m    /_____  \\    \x1b[0m',
+        '\x1b[35m   ██████\\  \\   \x1b[0m',
+        '\x1b[35m  ████████\\  \\  \x1b[0m',
+        '\x1b[35m ██████████\\  \\ \x1b[0m',
+        '\x1b[35m████████████\\__\\\x1b[0m',
+        '\x1b[35m                 \x1b[0m',
+      ];
+
+      for (let i = 0; i < Math.max(logo.length, info.length); i++) {
+        const left = logo[i] || '                   ';
+        const right = info[i] ? `${info[i][0]}: ${info[i][1]}` : '';
+        term.writeln(left + '  ' + right);
+      }
+    }
+
+    let matrixRunning = false;
+
+    function runMatrix() {
+      if (matrixRunning) return;
+      matrixRunning = true;
+
+      const cols = 80;
+      const rows = 24;
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#$%^&*';
+      const drops = new Array(cols).fill(0).map(() => Math.floor(Math.random() * rows));
+      
+      let frame = 0;
+      const maxFrames = 100;
+
+      const interval = setInterval(() => {
+        const lines = [];
+        for (let y = 0; y < rows; y++) {
+          let line = '';
+          for (let x = 0; x < cols; x++) {
+            if (Math.random() > 0.9) {
+              const ch = chars[Math.floor(Math.random() * chars.length)];
+              if (drops[x] === y) {
+                line += `\x1b[1;32m${ch}\x1b[0m`;
+              } else {
+                line += `\x1b[2;32m${ch}\x1b[0m`;
+              }
+            } else {
+              line += ' ';
+            }
+          }
+          lines.push(line);
+        }
+
+        // Move drops
+        for (let x = 0; x < cols; x++) {
+          drops[x]++;
+          if (drops[x] > rows && Math.random() > 0.95) {
+            drops[x] = 0;
+          }
+        }
+
+        // Write frame
+        term.write('\x1b[H'); // Move cursor to top-left
+        for (const line of lines) {
+          term.write(line + '\x1b[K\r\n');
+        }
+
+        frame++;
+        if (frame >= maxFrames) {
+          clearInterval(interval);
+          matrixRunning = false;
+          term.write('\x1b[2J\x1b[H'); // Clear screen
+          term.write(promptStr);
+        }
+      }, 80);
+    }
+
+    // =============================================
+    // UI Controls
+    // =============================================
+
+    document.getElementById('theme-select').addEventListener('change', function(e) {
+      const themes = {
+        'default': AnetsTerminal.DEFAULT_THEME,
+        'one-dark': AnetsTerminal.ONE_DARK_THEME,
+        'solarized': AnetsTerminal.SOLARIZED_DARK_THEME,
+        'dracula': AnetsTerminal.DRACULA_THEME,
+      };
+      term.setTheme(themes[e.target.value] || AnetsTerminal.DEFAULT_THEME);
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', function() {
+      term.clear();
+      term.write(promptStr);
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', function() {
+      term.reset();
+      inputBuffer = '';
+      term.write(promptStr);
+    });
+
+    document.getElementById('btn-demo').addEventListener('click', function() {
+      showBanner();
+      term.writeln('');
+      showColors();
+      term.writeln('');
+      term.write(promptStr);
+    });
+
+    document.getElementById('btn-resize').addEventListener('click', function() {
+      term.resize(40, 12);
+    });
+
+    document.getElementById('btn-resize-back').addEventListener('click', function() {
+      term.resize(80, 24);
+    });
+  </script>
+</body>
+</html>

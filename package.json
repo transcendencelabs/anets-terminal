@@ -1,0 +1,22 @@
+{
+  "name": "anets-terminal",
+  "version": "1.0.0",
+  "description": "An embeddable web-based terminal emulator with xterm.js-like features",
+  "main": "dist/anets-terminal.js",
+  "module": "dist/anets-terminal.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=dist/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap && esbuild src/index.ts --bundle --outfile=dist/anets-terminal.mjs --format=esm --sourcemap && tsc --emitDeclarationOnly",
+    "build:demo": "esbuild src/index.ts --bundle --outfile=demo/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap",
+    "dev": "esbuild src/index.ts --bundle --outfile=demo/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["terminal", "emulator", "xterm", "web", "embeddable", "ansi", "canvas"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "esbuild": "^0.25.2",
+    "typescript": "^5.8.3"
+  }
+}
