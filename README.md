@@ -1,31 +1,75 @@
 # AnetsTerminal
 
-An embeddable, lightweight web-based terminal emulator with xterm.js-like features. Zero dependencies, Canvas-based rendering, full ANSI color support.
+**An embeddable, zero-dependency web-based terminal emulator** with Canvas rendering, full ANSI color support (16-color, 256-color, true color), scrollback, mouse selection, cursor styles, and an xterm.js-compatible API.
 
-## Features
+![Terminal Demo](https://img.shields.io/badge/zero--dependencies-yes-green) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![Size](https://img.shields.io/badge/bundle-75KB-orange)
 
-- 🎨 **Full ANSI Color Support** — 16-color, 256-color, and true color (RGB)
-- 📺 **Canvas-based Rendering** — High-performance HTML5 Canvas renderer with HiDPI support
-- ⌨️ **Complete Input Handling** — Keyboard, mouse selection, scrollback navigation
-- 📜 **ANSI Escape Sequences** — CSI, OSC, ESC sequences (cursor movement, colors, scrolling, modes)
-- 🔄 **Scrollback Buffer** — Configurable scrollback with mouse wheel navigation
-- 🖱️ **Mouse Selection** — Click, drag, and double-click word selection with clipboard support
-- 🎯 **Multiple Cursor Styles** — Block, underline, and bar cursors with blink support
-- 🌈 **Built-in Themes** — Default, One Dark, Solarized Dark, Dracula
-- 🔌 **Backend Connectors** — WebSocket backend and extensible `BaseBackend` class
-- 📦 **Zero Dependencies** — No external runtime dependencies
-- 📐 **Resizable** — Dynamic terminal resizing
-- ♿ **Accessible** — Screen reader support via hidden textarea
+## ✨ Features
 
-## Quick Start
+### Color Support
+- **16 Standard ANSI Colors** — Black, Red, Green, Yellow, Blue, Magenta, Cyan, White + Bright variants
+- **256-Color Mode** — Full 216-color cube + 24 grayscale tones via `ESC[38;5;N`
+- **24-bit True Color (RGB)** — Full spectrum via `ESC[38;2;R;G;B`
+- **Background Colors** — All color modes work as background too (`ESC[48;...`)
+- **Color + Style Combinations** — Bold red, italic green on blue, etc.
 
-### Installation
+### Text Styles
+- **Bold** (`\x1b[1m`), **Dim** (`\x1b[2m`), **Italic** (`\x1b[3m`)
+- **Underline** (`\x1b[4m`), **Blink** (`\x1b[5m`), **Inverse** (`\x1b[7m`)
+- **Strikethrough** (`\x1b[9m`), **Hidden** (`\x1b[8m`)
+- **Combined** — Bold+Italic, Bold+Underline, Italic+Underline, etc.
+
+### Fonts
+- **Configurable font family** — Any monospace font: Courier New, Consolas, Fira Code, JetBrains Mono, etc.
+- **Configurable font size** — Any pixel size (default 15px)
+- **Line height** — Adjustable multiplier (default 1.2)
+- **Letter spacing** — Adjustable pixel spacing (default 0)
+- **Runtime changes** — Change font on the fly with `term.setFont('Fira Code', 18)`
+
+### Cursor
+- **Block** (default), **Underline**, **Bar** cursor styles
+- **Blinking** or steady cursor
+- **Cursor color** — Customizable via theme
+
+### Rendering
+- **Canvas-based** — High-performance HTML5 Canvas rendering
+- **HiDPI/Retina** — Automatic device pixel ratio handling
+- **Scrollback** — Configurable buffer (default 1000 lines), mouse wheel navigation
+- **Mouse Selection** — Click, drag, double-click word selection, clipboard copy
+- **Dynamic Resize** — `term.resize(cols, rows)` at any time
+
+### ANSI Escape Sequences
+- **CSI** — Cursor movement (CUU/CUD/CUF/CUB/CUP/CNL/CPL/CHA/VPA)
+- **Erase** — ED (erase display), EL (erase line), ECH (erase chars)
+- **Scroll** — SU (scroll up), SD (scroll down), DECSTBM (scroll region)
+- **Insert/Delete** — ICH, DCH, IL, DL
+- **SGR** — All text attributes and colors (see Color Support above)
+- **Modes** — DECSET/DECRST (cursor keys, auto-wrap, origin, cursor visibility)
+- **OSC** — Window title (OSC 0/2)
+- **Tabs** — HT, TBC (tab stops)
+- **Save/Restore Cursor** — DECSC/DECRC
+
+### Backend Integration
+- **WebSocket Backend** — Connect to any WebSocket server
+- **BaseBackend** — Abstract class for custom backends (SSH proxy, custom protocols)
+- **`attachWebSocket()`** — Quick-connect utility function
+
+### Built-in Themes
+- Default (classic dark)
+- One Dark
+- Solarized Dark
+- Dracula
+- Custom themes via `mergeTheme()` or partial theme objects
+
+## 📦 Installation
 
 ```bash
 npm install anets-terminal
 ```
 
-### Basic Usage
+## 🚀 Quick Start
+
+### ES Module
 
 ```typescript
 import { AnetsTerminal, TerminalEvent } from 'anets-terminal';
@@ -34,181 +78,359 @@ const term = new AnetsTerminal({
   cols: 80,
   rows: 24,
   cursorBlink: true,
+  theme: { background: '#1e1e2e', foreground: '#cdd6f4' }
 });
 
-// Mount to DOM
-term.open(document.getElementById('terminal-container'));
-
-// Write output
+term.open(document.getElementById('terminal'));
 term.write('\x1b[32mHello, World!\x1b[0m\r\n');
 
-// Handle user input
 term.on(TerminalEvent.Data, (data) => {
   console.log('User typed:', data);
+  // Send to your backend
+  websocket.send(data);
 });
 ```
 
-### Via CDN / Script Tag
+### CDN / Script Tag
 
 ```html
 <script src="anets-terminal.js"></script>
 <script>
   const term = new AnetsTerminal.AnetsTerminal({ cols: 80, rows: 24 });
   term.open(document.getElementById('terminal'));
+  term.write('\x1b[32mHello!\x1b[0m\r\n');
 </script>
 ```
 
-### WebSocket Backend
+## 🎨 Color Usage
 
-```typescript
+### 16 Standard Colors
+
+```javascript
+// Foreground colors
+term.write('\x1b[30mBlack\x1b[0m ');
+term.write('\x1b[31mRed\x1b[0m ');
+term.write('\x1b[32mGreen\x1b[0m ');
+term.write('\x1b[33mYellow\x1b[0m ');
+term.write('\x1b[34mBlue\x1b[0m ');
+term.write('\x1b[35mMagenta\x1b[0m ');
+term.write('\x1b[36mCyan\x1b[0m ');
+term.write('\x1b[37mWhite\x1b[0m ');
+
+// Bright foreground (codes 90-97)
+term.write('\x1b[91mBright Red\x1b[0m ');
+term.write('\x1b[92mBright Green\x1b[0m ');
+
+// Background colors (codes 40-47, 100-107)
+term.write('\x1b[43mYellow BG\x1b[0m ');
+term.write('\x1b[104mBright Blue BG\x1b[0m ');
+```
+
+### 256-Color Mode
+
+```javascript
+// Foreground with 256-color palette
+term.write('\x1b[38;5;196mRed 256\x1b[0m ');
+
+// Background with 256-color palette
+term.write('\x1b[48;5;21mBlue BG 256\x1b[0m ');
+```
+
+### True Color (24-bit RGB)
+
+```javascript
+// Foreground with RGB
+term.write('\x1b[38;2;255;128;0mOrange\x1b[0m ');
+
+// Background with RGB
+term.write('\x1b[48;2;0;128;255mBlue BG\x1b[0m ');
+
+// Combined fg + bg
+term.write('\x1b[38;2;255;255;255;48;2;0;100;200mWhite on Blue\x1b[0m ');
+```
+
+### Text Styles
+
+```javascript
+term.write('\x1b[1mBold\x1b[0m ');
+term.write('\x1b[2mDim\x1b[0m ');
+term.write('\x1b[3mItalic\x1b[0m ');
+term.write('\x1b[4mUnderline\x1b[0m ');
+term.write('\x1b[5mBlink\x1b[0m ');
+term.write('\x1b[7mInverse\x1b[0m ');
+term.write('\x1b[9mStrikethrough\x1b[0m ');
+
+// Combined: Bold + Italic + Red
+term.write('\x1b[1;3;31mBold Italic Red\x1b[0m ');
+```
+
+## 🔤 Fonts
+
+### Set at Creation
+
+```javascript
+const term = new AnetsTerminal({
+  fontFamily: 'Fira Code, Consolas, monospace',
+  fontSize: 16,
+  lineHeight: 1.3,
+  letterSpacing: 0.5,
+});
+```
+
+### Change at Runtime
+
+```javascript
+// Change font family
+term.setFont('JetBrains Mono');
+
+// Change font family and size
+term.setFont('Consolas', 18);
+
+// Use the font shell command in the demo
+// Type: font Consolas 16
+// Type: font "Fira Code" 14
+```
+
+## 🎭 Themes
+
+### Built-in Themes
+
+```javascript
+import { DEFAULT_THEME, ONE_DARK_THEME, SOLARIZED_DARK_THEME, DRACULA_THEME } from 'anets-terminal';
+
+// Use at creation
+const term = new AnetsTerminal({ theme: ONE_DARK_THEME });
+
+// Change at runtime
+term.setTheme(DRACULA_THEME);
+```
+
+### Custom Themes
+
+```javascript
+// Partial theme (merges with defaults)
+term.setTheme({
+  background: '#1e1e2e',
+  foreground: '#cdd6f4',
+  cursor: '#f5e0dc',
+  green: '#a6e3a1',
+  red: '#f38ba8',
+});
+
+// Full theme object
+term.setTheme({
+  background: '#0d1117',
+  foreground: '#c9d1d9',
+  cursor: '#58a6ff',
+  cursorAccent: '#0d1117',
+  selectionBackground: '#264f78',
+  selectionForeground: '#c9d1d9',
+  black: '#0d1117',   red: '#ff7b72',
+  green: '#7ee787',   yellow: '#e3b341',
+  blue: '#58a6ff',    magenta: '#d2a8ff',
+  cyan: '#79c0ff',    white: '#c9d1d9',
+  brightBlack: '#484f58',  brightRed: '#ffa198',
+  brightGreen: '#56d364', brightYellow: '#e3b341',
+  brightBlue: '#58a6ff',  brightMagenta: '#d2a8ff',
+  brightCyan: '#79c0ff',  brightWhite: '#f0f6fc',
+});
+```
+
+## 📡 Backend Integration
+
+### WebSocket (Live Shell)
+
+```javascript
 import { AnetsTerminal, WebSocketBackend, TerminalEvent } from 'anets-terminal';
 
 const term = new AnetsTerminal();
 term.open(container);
 
-const ws = new WebSocket('ws://localhost:8080');
+const ws = new WebSocket('ws://localhost:8080/pty');
 const backend = new WebSocketBackend(term, ws);
 backend.attach();
 
 // Or use the shortcut:
-// const backend = attachWebSocket(term, 'ws://localhost:8080');
+// import { attachWebSocket } from 'anets-terminal';
+// const backend = attachWebSocket(term, 'ws://localhost:8080/pty');
 ```
 
 ### Custom Backend
 
-```typescript
+```javascript
 import { AnetsTerminal, BaseBackend, TerminalEvent } from 'anets-terminal';
 
-class MyCustomBackend extends BaseBackend {
+class MySSHBackend extends BaseBackend {
+  private sshConnection: any;
+
   protected onInput(data: string): void {
-    // Process user input - send to your API, IPC, etc.
-    myApi.send(data);
+    this.sshConnection.send(data);
   }
 
-  // Call this.write() when you receive output
-  onOutput(data: string): void {
-    this.write(data);
+  protected onAttach(): void {
+    this.sshConnection = createSSHConnection('user@host');
+    this.sshConnection.onOutput((output: string) => {
+      this.write(output);  // Send to terminal
+    });
+  }
+
+  protected onDetach(): void {
+    this.sshConnection.close();
   }
 }
 
 const term = new AnetsTerminal();
 term.open(container);
 
-const backend = new MyCustomBackend();
+const backend = new MySSHBackend();
 backend.attach(term);
 ```
 
-## API Reference
+### HTTP Polling
 
-### `AnetsTerminal`
+```javascript
+const term = new AnetsTerminal();
+term.open(container);
 
-| Method / Property | Description |
-|---|---|
-| `new AnetsTerminal(options?)` | Create a new terminal instance |
-| `open(container)` | Mount the terminal to a DOM element |
-| `write(data)` | Write string or Uint8Array to the terminal |
-| `writeln(data)` | Write data with line ending |
-| `on(event, callback)` | Register an event handler |
-| `off(event, callback)` | Remove an event handler |
-| `focus()` | Focus the terminal |
-| `blur()` | Blur the terminal |
-| `resize(cols, rows)` | Resize the terminal |
-| `clear()` | Clear the terminal buffer |
-| `reset()` | Reset to initial state |
-| `dispose()` | Clean up and remove from DOM |
-| `setTheme(theme)` | Set the color theme |
-| `setFont(family?, size?)` | Set the font |
-| `scrollTo(offset)` | Scroll to scrollback position |
-| `scrollToBottom()` | Scroll to the bottom |
-| `getSelection()` | Get selected text |
-| `clearSelection()` | Clear current selection |
-| `cols` | Number of columns |
-| `rows` | Number of rows |
-| `cursorX` | Cursor X position |
-| `cursorY` | Cursor Y position |
-| `title` | Current terminal title |
-| `scrollOffset` | Current scroll offset |
-| `isFocused` | Whether terminal is focused |
+term.on(TerminalEvent.Data, (data) => {
+  fetch('/api/terminal/input', { method: 'POST', body: data });
+});
 
-### `TerminalOptions`
+setInterval(async () => {
+  const res = await fetch('/api/terminal/output');
+  const data = await res.text();
+  term.write(data);
+}, 50);
+```
+
+## 📋 API Reference
+
+### Constructor Options
 
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `cols` | `number` | `80` | Number of columns |
 | `rows` | `number` | `24` | Number of rows |
-| `fontFamily` | `string` | `'Courier New, monospace'` | Font family |
+| `fontFamily` | `string` | `'Courier New, Courier, monospace'` | Font family |
 | `fontSize` | `number` | `15` | Font size in pixels |
 | `lineHeight` | `number` | `1.2` | Line height multiplier |
 | `letterSpacing` | `number` | `0` | Letter spacing in pixels |
-| `scrollback` | `number` | `1000` | Scrollback buffer size |
+| `scrollback` | `number` | `1000` | Scrollback buffer lines |
 | `theme` | `Partial<TerminalTheme>` | `{}` | Color theme |
 | `cursorStyle` | `'block'\|'underline'\|'bar'` | `'block'` | Cursor style |
 | `cursorBlink` | `boolean` | `true` | Cursor blink |
 | `focusOnOpen` | `boolean` | `false` | Focus on open |
-| `wordSeparators` | `string` | `' ()[]{}\'"` | Word boundary chars |
+| `wordSeparators` | `string` | `' ()[]{}\'"` | Word boundary characters |
 
-### `TerminalEvent`
+### Methods
 
-| Event | Description |
+| Method | Description |
 |---|---|
-| `Data` | User input data |
-| `Resize` | Terminal resized |
-| `Title` | Title changed (OSC 0/2) |
-| `Bell` | Bell triggered |
-| `Focus` | Terminal focused |
-| `Blur` | Terminal blurred |
-| `Selection` | Text selected |
-| `Scroll` | Scrollback changed |
-| `LineFeed` | Line feed executed |
+| `open(container)` | Mount terminal to a DOM element |
+| `write(data)` | Write string or `Uint8Array` to terminal |
+| `writeln(data)` | Write data + `\r\n` |
+| `on(event, callback)` | Register event handler |
+| `off(event, callback)` | Remove event handler |
+| `focus()` | Focus the terminal |
+| `blur()` | Blur the terminal |
+| `resize(cols, rows)` | Resize the terminal |
+| `clear()` | Clear buffer and reset cursor |
+| `reset()` | Reset to initial state |
+| `dispose()` | Clean up and remove from DOM |
+| `setTheme(theme)` | Set color theme (partial or full) |
+| `setFont(family?, size?)` | Change font at runtime |
+| `scrollTo(offset)` | Scroll to scrollback position |
+| `scrollToBottom()` | Scroll to bottom |
+| `getSelection()` | Get selected text |
+| `clearSelection()` | Clear selection |
 
-### Themes
+### Properties
 
-```typescript
-import { DEFAULT_THEME, ONE_DARK_THEME, SOLARIZED_DARK_THEME, DRACULA_THEME, mergeTheme } from 'anets-terminal';
+| Property | Type | Description |
+|---|---|---|
+| `cols` | `number` | Current column count |
+| `rows` | `number` | Current row count |
+| `cursorX` | `number` | Cursor X position |
+| `cursorY` | `number` | Cursor Y position |
+| `title` | `string` | Terminal title (set via OSC) |
+| `scrollOffset` | `number` | Current scroll offset |
+| `isFocused` | `boolean` | Whether terminal is focused |
+| `buffer` | `Buffer` | Direct buffer access |
 
-// Use a built-in theme
-term.setTheme(ONE_DARK_THEME);
+### Events (`TerminalEvent`)
 
-// Create a custom theme (partial, merged with defaults)
-term.setTheme({
-  background: '#1e1e2e',
-  foreground: '#cdd6f4',
-  cursor: '#f5e0dc',
-  green: '#a6e3a1',
-});
-```
+| Event | Args | Description |
+|---|---|---|
+| `Data` | `string` | User input (keyboard) |
+| `Binary` | `Uint8Array` | Binary data |
+| `Resize` | `{cols, rows}` | Terminal resized |
+| `Title` | `string` | Title changed (OSC 0/2) |
+| `Bell` | — | Bell triggered (`\x07`) |
+| `Focus` | — | Terminal focused |
+| `Blur` | — | Terminal blurred |
+| `Selection` | — | Text selected |
+| `Scroll` | `number` | Scroll position changed |
+| `LineFeed` | — | Line feed executed |
 
-## Architecture
+## 🎮 Interactive Demo
+
+Open `demo/index.html` in a browser (or visit `http://localhost:8080` after running `npm run build:demo`). The demo includes a simulated shell with:
+
+| Command | Description |
+|---|---|
+| `help` | Show all available commands |
+| `color` | Full color demo (16-color, 256-color, true color, combos) |
+| `colors` | Basic color palette |
+| `font <family> [size]` | Change font at runtime (e.g., `font Consolas 16`) |
+| `banner` | ASCII art banner |
+| `neofetch` | System info display |
+| `cowsay <text>` | Cowsay! |
+| `matrix` | Matrix rain animation |
+| `clear` | Clear terminal |
+| `resize <cols> <rows>` | Resize terminal |
+| `echo <text>` | Echo text back |
+| `date` | Current date/time |
+| `whoami` | Show current user |
+| `ls` | List files |
+| `history` | Command history |
+
+**UI Buttons:**
+- 🎨 **Theme selector** — Switch between Default, One Dark, Solarized Dark, Dracula
+- 🅰️ **Font Demo** — Shows all text styles (bold, italic, underline, etc.) and special chars
+- 🌈 **Color Demo** — Complete color showcase with gradients and combinations
+- 📐 **Resize** — Toggle between 40×12 and 80×24
+
+## 🏗️ Architecture
 
 ```
 ┌─────────────────────────────────────────┐
-│              AnetsTerminal              │
+│            AnetsTerminal               │
 │  (Public API, Event System, Modes)      │
-├──────────────┬──────────────────────────┤
-│  AnsiParser  │       Buffer             │
-│  (State      │  (Cell Grid, Scrolling,  │
-│   Machine)   │   Scrollback)            │
-├──────────────┼──────────────────────────┤
-│ InputHandler │       Renderer           │
+├──────────────┬─────────────────────────┤
+│  AnsiParser  │       Buffer            │
+│  (State      │  (Cell Grid, Scrolling, │
+│   Machine)   │   Scrollback)           │
+├──────────────┼─────────────────────────┤
+│ InputHandler │       Renderer          │
 │ (Keyboard,   │  (Canvas 2D, Cursor,     │
-│  Mouse,      │   Selection, Colors)     │
-│  Selection)  │                          │
-├──────────────┴──────────────────────────┤
-│           Backend Interface             │
-│  (WebSocket, BaseBackend, Custom)       │
+│  Mouse,      │   Selection, Colors)    │
+│  Selection)  │                         │
+├──────────────┴─────────────────────────┤
+│          Backend Interface             │
+│  (WebSocket, BaseBackend, Custom)      │
 └─────────────────────────────────────────┘
 ```
 
-## Development
+## 🔧 Development
 
 ```bash
 # Install dependencies
 npm install
 
-# Build for distribution
+# Build for distribution (IIFE + ESM + types)
 npm run build
 
-# Build demo
+# Build demo bundle
 npm run build:demo
 
 # Watch mode for development
@@ -218,18 +440,15 @@ npm run dev
 npm run typecheck
 ```
 
-## Demo
+### Output Files
 
-Open `demo/index.html` in a browser to see the terminal in action with a simulated shell that includes:
+| File | Format | Size | Description |
+|---|---|---|---|
+| `dist/anets-terminal.js` | IIFE | ~75KB | Browser global (`AnetsTerminal`) |
+| `dist/anets-terminal.mjs` | ESM | ~69KB | ES module import |
+| `dist/index.d.ts` | Types | — | TypeScript declarations |
+| `demo/anets-terminal.js` | IIFE | ~75KB | Demo bundle |
 
-- Command history (up/down arrows)
-- Tab completion
-- ANSI color demos (`colors` command)
-- ASCII art (`banner`, `cowsay`, `neofetch`)
-- Matrix rain effect (`matrix` command)
-- Theme switching
-- Terminal resizing
-
-## License
+## 📄 License
 
 MIT
