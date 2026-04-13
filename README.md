@@ -191,6 +191,44 @@ term.setFont('Consolas', 18);
 // Type: font "Fira Code" 14
 ```
 
+## 📜 Scrollbar & Scrolling
+
+### Show Scrollbar
+
+```javascript
+const term = new AnetsTerminal({
+  showScrollbar: true,  // false by default
+});
+term.open(document.getElementById('terminal'));
+```
+
+### Mouse Scroll
+
+```javascript
+const term = new AnetsTerminal({
+  enableMouseScroll: true,  // true by default - scroll with mousewheel
+});
+term.open(document.getElementById('terminal'));
+
+// To disable mousewheel scrolling:
+const noScroll = new AnetsTerminal({
+  enableMouseScroll: false,  // disable mousewheel scroll
+});
+```
+
+### Programmatic Scrolling
+
+```javascript
+// Scroll to a specific offset
+term.scrollTo(10);
+
+// Scroll to bottom
+term.scrollToBottom();
+
+// Get current scroll offset
+const offset = term.scrollOffset;
+```
+
 ## 🎭 Themes
 
 ### Built-in Themes
@@ -321,6 +359,8 @@ setInterval(async () => {
 | `cursorBlink` | `boolean` | `true` | Cursor blink |
 | `focusOnOpen` | `boolean` | `false` | Focus on open |
 | `wordSeparators` | `string` | `' ()[]{}\'"` | Word boundary characters |
+| `showScrollbar` | `boolean` | `false` | Show scrollbar on the right |
+| `enableMouseScroll` | `boolean` | `true` | Enable scrolling with mousewheel |
 
 ### Methods
 
@@ -335,6 +375,8 @@ setInterval(async () => {
 | `blur()` | Blur the terminal |
 | `resize(cols, rows)` | Resize the terminal |
 | `clear()` | Clear buffer and reset cursor |
+| `scrollTo(offset)` | Scroll to scrollback position |
+| `scrollToBottom()` | Scroll to bottom |
 | `reset()` | Reset to initial state |
 | `dispose()` | Clean up and remove from DOM |
 | `setTheme(theme)` | Set color theme (partial or full) |

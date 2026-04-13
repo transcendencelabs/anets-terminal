@@ -207,13 +207,27 @@ websocket.onmessage = (e) => {
 
   <script src="anets-terminal.js"></script>
   <script>
-    // Create terminal instance
+    // =============================================
+    // Create terminal instance with configuration
+    // =============================================
+    // 
+    // Key options demonstrated:
+    // - fontSize: 12         - Smaller font size for more content
+    // - showScrollbar: true  - Show vertical scrollbar (default: false)
+    // - enableMouseScroll: true - Allow scrolling with mousewheel (default: true)
+    //
+    // Example: to disable mousewheel scroll, set enableMouseScroll: false
+    // Example: to hide scrollbar, set showScrollbar: false
+    //
     const term = new AnetsTerminal.AnetsTerminal({
       cols: 80,
       rows: 24,
       cursorBlink: true,
       cursorStyle: 'block',
       focusOnOpen: true,
+      fontSize: 12,
+      showScrollbar: true,
+      enableMouseScroll: true,
       theme: AnetsTerminal.DEFAULT_THEME,
     });
 

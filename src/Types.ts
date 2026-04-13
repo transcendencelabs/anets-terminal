@@ -155,6 +155,10 @@ export interface TerminalOptions {
   wordSeparators?: string;
   /** Draw bold text in bright colors (default: true) */
   drawBoldTextInBrightColors?: boolean;
+  /** Show scrollbar (default: false) */
+  showScrollbar?: boolean;
+  /** Enable mousewheel scroll (default: true) */
+  enableMouseScroll?: boolean;
 }
 
 /** Event types emitted by the terminal */

@@ -23,6 +23,8 @@ const DEFAULT_OPTIONS: Required<TerminalOptions> = {
   rightClickSelectsWord: false,
   wordSeparators: ' ()[]{}\'"',
   drawBoldTextInBrightColors: true,
+  showScrollbar: false,
+  enableMouseScroll: true,
 };
 
 /**
@@ -141,6 +143,32 @@ export class AnetsTerminal {
     this._canvas.style.cursor = 'text';
     container.appendChild(this._canvas);
 
+    // Create scrollbar if enabled
+    if (this._options.showScrollbar) {
+      this._scrollbar = document.createElement('div');
+      this._scrollbar.style.position = 'absolute';
+      this._scrollbar.style.right = '0';
+      this._scrollbar.style.top = '0';
+      this._scrollbar.style.width = '12px';
+      this._scrollbar.style.height = '100%';
+      this._scrollbar.style.backgroundColor = '#333';
+      this._scrollbar.style.overflow = 'hidden';
+      
+      const thumb = document.createElement('div');
+      thumb.style.position = 'absolute';
+      thumb.style.width = '100%';
+      thumb.style.backgroundColor = '#666';
+      thumb.style.borderRadius = '6px';
+      thumb.style.cursor = 'pointer';
+      thumb.style.transition = 'background-color 0.2s';
+      
+      this._scrollbar.appendChild(thumb);
+      container.appendChild(this._scrollbar);
+      
+      // Update scrollbar on scroll
+      this._updateScrollbar();
+    }
+
     // Create renderer
     this._renderer = new Renderer(
       this._canvas,
@@ -161,6 +189,7 @@ export class AnetsTerminal {
       this._buffer,
       this._renderer,
       this._options.wordSeparators,
+      this._options.enableMouseScroll,
     );
 
     // Forward input handler data events
@@ -171,7 +200,10 @@ export class AnetsTerminal {
     // Forward other events
     this._inputHandler.on(TerminalEvent.Focus, () => this._emit(TerminalEvent.Focus));
     this._inputHandler.on(TerminalEvent.Blur, () => this._emit(TerminalEvent.Blur));
-    this._inputHandler.on(TerminalEvent.Scroll, (offset: number) => this._emit(TerminalEvent.Scroll, offset));
+    this._inputHandler.on(TerminalEvent.Scroll, (offset: number) => {
+      this._updateScrollbar();
+      this._emit(TerminalEvent.Scroll, offset);
+    });
     this._inputHandler.on(TerminalEvent.Selection, () => this._emit(TerminalEvent.Selection));
 
     // Handle window resize
@@ -363,6 +395,31 @@ export class AnetsTerminal {
   /** Get the scroll offset */
   get scrollOffset(): number {
     return this._buffer.scrollOffset;
+  }
+
+  /** Update scrollbar position and size */
+  private _updateScrollbar(): void {
+    if (!this._scrollbar) return;
+
+    const thumb = this._scrollbar.querySelector('div') as HTMLDivElement;
+    if (!thumb) return;
+
+    const totalLines = this._buffer.scrollbackLength + this._buffer.rows;
+    const visibleLines = this._buffer.rows;
+    const scrollOffset = this._buffer.scrollOffset;
+
+    if (totalLines <= visibleLines) {
+      // No scrolling needed
+      thumb.style.height = '100%';
+      thumb.style.top = '0';
+    } else {
+      const scrollbarHeight = this._scrollbar.clientHeight;
+      const thumbHeight = (visibleLines / totalLines) * scrollbarHeight;
+      const thumbTop = (scrollOffset / (totalLines - visibleLines)) * (scrollbarHeight - thumbHeight);
+      
+      thumb.style.height = `${Math.max(20, thumbHeight)}px`;
+      thumb.style.top = `${thumbTop}px`;
+    }
   }
 
   /** Dispose of the terminal and clean up resources */
@@ -964,6 +1021,7 @@ export class AnetsTerminal {
 
   /** Request a render update */
   private _requestRender(): void {
+    this._updateScrollbar();
     if (this._renderer) {
       this._renderer.setCursor({
         x: this._cursorX,

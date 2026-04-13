@@ -20,17 +20,20 @@ export class InputHandler {
   private _isFocused: boolean = false;
   private _mouseDown: boolean = false;
   private _wordSeparators: string;
+  private _enableMouseScroll: boolean;
 
   constructor(
     container: HTMLElement,
     buffer: Buffer,
     renderer: Renderer,
     wordSeparators: string = ' ()[]{}\'"',
+    enableMouseScroll: boolean = true,
   ) {
     this._container = container;
     this._buffer = buffer;
     this._renderer = renderer;
     this._wordSeparators = wordSeparators;
+    this._enableMouseScroll = enableMouseScroll;
 
     // Create hidden textarea for capturing keyboard input
     this._textarea = document.createElement('textarea');
@@ -69,8 +72,10 @@ export class InputHandler {
     this._container.addEventListener('mouseup', this._onMouseUp);
     this._container.addEventListener('dblclick', this._onDoubleClick);
 
-    // Scroll for scrollback
-    this._container.addEventListener('wheel', this._onWheel, { passive: false });
+    // Scroll for scrollback (if enabled)
+    if (this._enableMouseScroll) {
+      this._container.addEventListener('wheel', this._onWheel, { passive: false });
+    }
 
     // Context menu (right click)
     this._container.addEventListener('contextmenu', this._onContextMenu);
