@@ -160,6 +160,8 @@
     <button id="btn-clear">Clear</button>
     <button id="btn-reset">Reset</button>
     <button id="btn-demo">Run Demo</button>
+    <button id="btn-font-demo">Font Demo</button>
+    <button id="btn-color-demo">Color Demo</button>
     <button id="btn-resize">Resize 40x12</button>
     <button id="btn-resize-back">Resize 80x24</button>
   </div>
@@ -308,7 +310,7 @@ websocket.onmessage = (e) => {
 
     function tabComplete(input) {
       const commands = ['help', 'echo', 'clear', 'date', 'whoami', 'pwd', 'ls', 
-                        'uname', 'uptime', 'colors', 'theme', 'banner', 'cowsay',
+                        'uname', 'uptime', 'colors', 'color', 'font', 'banner', 'cowsay',
                         'matrix', 'neofetch', 'resize', 'history'];
       const matches = commands.filter(c => c.startsWith(input.trim()));
       if (matches.length === 1) {
@@ -340,7 +342,9 @@ websocket.onmessage = (e) => {
           term.writeln('  \x1b[32mpwd\x1b[0m       - Print working directory');
           term.writeln('  \x1b[32mls\x1b[0m        - List files');
           term.writeln('  \x1b[32muname\x1b[0m     - System information');
-          term.writeln('  \x1b[32mcolors\x1b[0m    - Display color palette');
+          term.writeln('  \x1b[32mcolors\x1b[0m    - Display basic color palette');
+          term.writeln('  \x1b[32mcolor\x1b[0m     - Full color demo (16, 256, true color)');
+          term.writeln('  \x1b[32mfont\x1b[0m      - Change font (font <family> [size])');
           term.writeln('  \x1b[32mbanner\x1b[0m    - Show ASCII banner');
           term.writeln('  \x1b[32mcowsay\x1b[0m    - Cowsay!');
           term.writeln('  \x1b[32mneofetch\x1b[0m  - System info display');
@@ -386,6 +390,24 @@ websocket.onmessage = (e) => {
 
         case 'colors':
           showColors();
+          break;
+
+        case 'color':
+          showColorDemo();
+          break;
+
+        case 'font':
+          if (args.length >= 1) {
+            const fontSize = args.length >= 2 ? parseInt(args[1]) : undefined;
+            const fontFamily = args[0].replace(/^"|"$/g, '');
+            term.setFont(fontFamily, fontSize);
+            term.writeln(`\x1b[36mFont changed to: ${fontFamily}${fontSize ? ' at ' + fontSize + 'px' : ''}\x1b[0m`);
+          } else {
+            term.writeln('\x1b[36mUsage: font <family> [size]\x1b[0m');
+            term.writeln('\x1b[36m  font Consolas 16\x1b[0m');
+            term.writeln('\x1b[36m  font "Fira Code" 18\x1b[0m');
+            term.writeln('\x1b[36m  font "Courier New" 12\x1b[0m');
+          }
           break;
 
         case 'banner':
@@ -580,6 +602,203 @@ websocket.onmessage = (e) => {
     }
 
     // =============================================
+    // Font & Color Demos
+    // =============================================
+
+    function showFontDemo() {
+      term.writeln('\x1b[1;36m╔══════════════════════════════════════════════════════════════════════════════╗\x1b[0m');
+      term.writeln('\x1b[1;36m║                          FONT & TEXT STYLE DEMO                             ║\x1b[0m');
+      term.writeln('\x1b[1;36m╚══════════════════════════════════════════════════════════════════════════════╝\x1b[0m');
+      term.writeln('');
+
+      // Text styles
+      term.writeln('\x1b[1;33m── Text Styles ──────────────────────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  Normal:       The quick brown fox jumps over the lazy dog');
+      term.writeln('  \x1b[1mBold:          The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[2mDim:           The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[3mItalic:        The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[4mUnderline:     The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[9mStrikethrough: The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[5mBlink:         The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('  \x1b[7mInverse:       The quick brown fox jumps over the lazy dog\x1b[0m');
+      term.writeln('');
+
+      // Combined styles
+      term.writeln('\x1b[1;33m── Combined Styles ──────────────────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[1;3mBold + Italic:     The quick brown fox\x1b[0m');
+      term.writeln('  \x1b[1;4mBold + Underline:  The quick brown fox\x1b[0m');
+      term.writeln('  \x1b[3;4mItalic + Underline: The quick brown fox\x1b[0m');
+      term.writeln('  \x1b[1;3;4mBold + Italic + UL: The quick brown fox\x1b[0m');
+      term.writeln('  \x1b[2;3mDim + Italic:       The quick brown fox\x1b[0m');
+      term.writeln('');
+
+      // Font size changes via the API
+      term.writeln('\x1b[1;33m── Font Size Changes (via API) ──────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  Current font: Courier New at 15px');
+      term.writeln('  \x1b[36mUse the buttons below or type: font <family> <size>\x1b[0m');
+      term.writeln('  \x1b[36mExample: font "Fira Code" 18\x1b[0m');
+      term.writeln('  \x1b[36mExample: font Consolas 16\x1b[0m');
+      term.writeln('  \x1b[36mExample: font "Courier New" 12\x1b[0m');
+      term.writeln('');
+
+      // ASCII art showing different visual weights
+      term.writeln('\x1b[1;33m── Visual Weight Demo ───────────────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[2m▒▒▒▒ Light (dim) ▒▒▒▒\x1b[0m');
+      term.writeln('  \x1b[0m████ Normal ████\x1b[0m');
+      term.writeln('  \x1b[1m████ Bold/Heavy ████\x1b[0m');
+      term.writeln('');
+
+      // Box drawing characters
+      term.writeln('\x1b[1;33m── Box Drawing & Special Characters ─────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  ┌──────────┐  ╔══════════╗  ┏━━━━━━━━━━┓');
+      term.writeln('  │ Single   │  ║ Double   ║  ┃ Heavy    ┃');
+      term.writeln('  ├──────────┤  ╠══════════╣  ┣━━━━━━━━━━┫');
+      term.writeln('  │ Line     │  ║ Line     ║  ┃ Line     ┃');
+      term.writeln('  └──────────┘  ╚══════════╝  ┗━━━━━━━━━━┛');
+      term.writeln('');
+      term.writeln('  Arrows: ← → ↑ ↓ ↔ ⇐ ⇒ ⇑ ⇓');
+      term.writeln('  Blocks: █ ▓ ▒ ░ ▄ ▀ ■ □ ▪ ▫');
+      term.writeln('  Math:   ± × ÷ ≠ ≈ ≤ ≥ ∞ ∑ ∏ √ ∫');
+      term.writeln('');
+    }
+
+    function showColorDemo() {
+      term.writeln('\x1b[1;36m╔══════════════════════════════════════════════════════════════════════════════╗\x1b[0m');
+      term.writeln('\x1b[1;36m║                           COLOR SUPPORT DEMO                                ║\x1b[0m');
+      term.writeln('\x1b[1;36m╚══════════════════════════════════════════════════════════════════════════════╝\x1b[0m');
+      term.writeln('');
+
+      // 16 Standard ANSI Colors
+      term.writeln('\x1b[1;33m── 16 Standard ANSI Colors ──────────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[1mForeground:\x1b[0m');
+      const fgNames = ['Black', 'Red', 'Green', 'Yellow', 'Blue', 'Magenta', 'Cyan', 'White'];
+      for (let i = 0; i < 8; i++) {
+        term.write(`  \x1b[${30+i}m██\x1b[0m ${fgNames[i]}`);
+      }
+      term.writeln('');
+      term.writeln('');
+      term.writeln('  \x1b[1mBright Foreground:\x1b[0m');
+      for (let i = 0; i < 8; i++) {
+        term.write(`  \x1b[${90+i}m██\x1b[0m Bright ${fgNames[i]}`);
+      }
+      term.writeln('');
+      term.writeln('');
+
+      // Background colors
+      term.writeln('  \x1b[1mBackground Colors:\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 8; i++) {
+        term.write(`\x1b[${40+i}m  ${fgNames[i]}  \x1b[0m `);
+      }
+      term.writeln('');
+      term.write('  ');
+      for (let i = 0; i < 8; i++) {
+        term.write(`\x1b[${100+i}m Br.${fgNames[i]} \x1b[0m `);
+      }
+      term.writeln('');
+      term.writeln('');
+
+      // 256 Color Mode
+      term.writeln('\x1b[1;33m── 256-Color Mode (ESC[38;5;N) ──────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[1mColor Strip (0-15):\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 16; i++) {
+        term.write(`\x1b[38;5;${i}m██\x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('');
+      term.writeln('  \x1b[1m216-Color Cube (16-231):\x1b[0m');
+      for (let g = 0; g < 6; g++) {
+        term.write('  ');
+        for (let r = 0; r < 6; r++) {
+          for (let b = 0; b < 6; b++) {
+            const idx = 16 + r * 36 + g * 6 + b;
+            term.write(`\x1b[48;5;${idx}m  \x1b[0m`);
+          }
+          term.write(' ');
+        }
+        term.writeln('');
+      }
+      term.writeln('');
+      term.writeln('  \x1b[1mGrayscale Ramp (232-255):\x1b[0m');
+      term.write('  ');
+      for (let i = 232; i <= 255; i++) {
+        term.write(`\x1b[48;5;${i}m  \x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('');
+
+      // True Color (RGB)
+      term.writeln('\x1b[1;33m── True Color / 24-bit RGB (ESC[38;2;R;G;B) ────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[1mRed Gradient:\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 40; i++) {
+        const v = Math.round(255 * i / 39);
+        term.write(`\x1b[48;2;${v};0;0m \x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('  \x1b[1mGreen Gradient:\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 40; i++) {
+        const v = Math.round(255 * i / 39);
+        term.write(`\x1b[48;2;0;${v};0m \x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('  \x1b[1mBlue Gradient:\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 40; i++) {
+        const v = Math.round(255 * i / 39);
+        term.write(`\x1b[48;2;0;0;${v}m \x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('  \x1b[1mRainbow:\x1b[0m');
+      term.write('  ');
+      for (let i = 0; i < 60; i++) {
+        const r = Math.round(127 + 127 * Math.sin(i * Math.PI / 30));
+        const g = Math.round(127 + 127 * Math.sin(i * Math.PI / 30 + 2 * Math.PI / 3));
+        const b = Math.round(127 + 127 * Math.sin(i * Math.PI / 30 + 4 * Math.PI / 3));
+        term.write(`\x1b[48;2;${r};${g};${b}m \x1b[0m`);
+      }
+      term.writeln('');
+      term.writeln('');
+
+      // Color + Style combinations
+      term.writeln('\x1b[1;33m── Color + Style Combinations ───────────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.writeln('  \x1b[1;31mBold Red\x1b[0m    \x1b[3;32mItalic Green\x1b[0m    \x1b[4;34mUnderline Blue\x1b[0m');
+      term.writeln('  \x1b[1;33;40mBold Yellow on Black\x1b[0m    \x1b[3;36;41mItalic Cyan on Red\x1b[0m');
+      term.writeln('  \x1b[1;37;44mBold White on Blue\x1b[0m    \x1b[2;35mDim Magenta\x1b[0m');
+      term.writeln('');
+
+      // Foreground + Background combinations
+      term.writeln('\x1b[1;33m── Foreground/Background Combinations ────────────────────────────────────────\x1b[0m');
+      term.writeln('');
+      term.write('  ');
+      const bgColors = [40, 41, 42, 43, 44, 45, 46, 47];
+      const fgColors = [30, 31, 32, 33, 34, 35, 36, 37];
+      for (const bg of bgColors) {
+        term.write(`\x1b[${bg}m  ${bg-40}  \x1b[0m`);
+      }
+      term.writeln('');
+      for (const fg of fgColors) {
+        term.write('  ');
+        for (const bg of bgColors) {
+          term.write(`\x1b[${fg};${bg}m Aa \x1b[0m`);
+        }
+        term.writeln(`  \x1b[${fg}mfg=${fg-30}\x1b[0m`);
+      }
+      term.writeln('');
+    }
+
+    // =============================================
     // UI Controls
     // =============================================
 
@@ -609,6 +828,16 @@ websocket.onmessage = (e) => {
       term.writeln('');
       showColors();
       term.writeln('');
+      term.write(promptStr);
+    });
+
+    document.getElementById('btn-font-demo').addEventListener('click', function() {
+      showFontDemo();
+      term.write(promptStr);
+    });
+
+    document.getElementById('btn-color-demo').addEventListener('click', function() {
+      showColorDemo();
       term.write(promptStr);
     });
 
