@@ -60,8 +60,8 @@ export class AnetsTerminal {
   private _cursorBlink: boolean;
 
   // Current text attributes
-  private _currentFg: TerminalColor = 7; // default white
-  private _currentBg: TerminalColor = 0; // default black
+  private _currentFg: TerminalColor = -1; // default (use theme foreground)
+  private _currentBg: TerminalColor = -1; // default (use theme background)
   private _currentStyle: TextStyle = {
     bold: false,
     dim: false,
@@ -93,8 +93,8 @@ export class AnetsTerminal {
   // Saved cursor state (DECSC/DECRC)
   private _savedCursorX: number = 0;
   private _savedCursorY: number = 0;
-  private _savedFg: TerminalColor = 7;
-  private _savedBg: TerminalColor = 0;
+  private _savedFg: TerminalColor = -1;
+  private _savedBg: TerminalColor = -1;
   private _savedStyle: TextStyle = { ...this._currentStyle };
 
   constructor(options?: TerminalOptions) {
@@ -325,8 +325,8 @@ export class AnetsTerminal {
     this._insertMode = false;
     this._originMode = false;
     this._autoWrap = true;
-    this._currentFg = 7;
-    this._currentBg = 0;
+    this._currentFg = -1;
+    this._currentBg = -1;
     this._currentStyle = {
       bold: false, dim: false, italic: false, underline: false,
       blink: false, inverse: false, hidden: false, strikethrough: false,
@@ -700,8 +700,8 @@ export class AnetsTerminal {
             blink: false, inverse: false, hidden: false, strikethrough: false,
             doubleWidth: false,
           };
-          this._currentFg = 7;
-          this._currentBg = 0;
+          this._currentFg = -1;
+          this._currentBg = -1;
           break;
         case 1: // Bold
           this._currentStyle.bold = true;
@@ -758,7 +758,7 @@ export class AnetsTerminal {
           i = this._handleExtendedColor(params, i, false);
           break;
         case 39: // Default foreground color
-          this._currentFg = 7;
+          this._currentFg = -1;
           break;
         case 40: case 41: case 42: case 43:
         case 44: case 45: case 46: case 47:
@@ -769,7 +769,7 @@ export class AnetsTerminal {
           i = this._handleExtendedColor(params, i, true);
           break;
         case 49: // Default background color
-          this._currentBg = 0;
+          this._currentBg = -1;
           break;
         case 90: case 91: case 92: case 93:
         case 94: case 95: case 96: case 97:

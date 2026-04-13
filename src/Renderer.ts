@@ -345,8 +345,12 @@ export class Renderer {
       return `rgb(${color[0]},${color[1]},${color[2]})`;
     }
 
-    // ANSI color index
+    // Default color (-1 means use theme default)
     const index = color as number;
+    if (index === -1) {
+      return isBackground ? this._theme.background : this._theme.foreground;
+    }
+
     const themeColors = [
       this._theme.black,
       this._theme.red,
@@ -378,7 +382,24 @@ export class Renderer {
       return themeColors[index];
     }
 
-    // For indices > 15, fallback to default
+    // 256-color: 216-color cube (indices 16-231)
+    if (index >= 16 && index <= 231) {
+      const cubeIndex = index - 16;
+      const r = Math.floor(cubeIndex / 36);
+      const g = Math.floor((cubeIndex % 36) / 6);
+      const b = cubeIndex % 6;
+      // Color cube values: 0, 95, 135, 175, 215, 255
+      const cubeValues = [0, 95, 135, 175, 215, 255];
+      return `rgb(${cubeValues[r]},${cubeValues[g]},${cubeValues[b]})`;
+    }
+
+    // 256-color: grayscale ramp (indices 232-255)
+    if (index >= 232 && index <= 255) {
+      const gray = 8 + (index - 232) * 10;
+      return `rgb(${gray},${gray},${gray})`;
+    }
+
+    // Fallback to default
     return isBackground ? this._theme.background : this._theme.foreground;
   }
 
