@@ -144,6 +144,12 @@ export class AnsiParser {
 
   /** Parse in NORMAL state */
   private _parseNormal(code: number, char: string): void {
+    // ESC - must be checked BEFORE C0 control characters
+    if (code === 0x1b) {
+      this._state = ParserState.ESC;
+      return;
+    }
+    
     // C0 control characters
     if (code < 0x20) {
       this._callbacks.execute?.(code);
@@ -151,11 +157,6 @@ export class AnsiParser {
     }
     // DEL - ignore
     if (code === 0x7f) {
-      return;
-    }
-    // ESC
-    if (code === 0x1b) {
-      this._state = ParserState.ESC;
       return;
     }
     // Normal printable character
