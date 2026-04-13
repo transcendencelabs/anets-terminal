@@ -374,7 +374,7 @@ setInterval(async () => {
 
 ## 🎮 Interactive Demo
 
-Open `demo/index.html` in a browser (or visit `http://localhost:8080` after running `npm run build:demo`). The demo includes a simulated shell with:
+Open `demo/index.html` in a browser to see an interactive terminal with a simulated shell. The demo includes:
 
 | Command | Description |
 |---|---|
@@ -399,6 +399,10 @@ Open `demo/index.html` in a browser (or visit `http://localhost:8080` after runn
 - 🅰️ **Font Demo** — Shows all text styles (bold, italic, underline, etc.) and special chars
 - 🌈 **Color Demo** — Complete color showcase with gradients and combinations
 - 📐 **Resize** — Toggle between 40×12 and 80×24
+
+### Simple Test Demo
+
+For a minimal color test, open `test-colors.html` to verify basic color rendering works correctly.
 
 ## 🏗️ Architecture
 
@@ -448,6 +452,13 @@ npm run typecheck
 | `dist/anets-terminal.mjs` | ESM | ~69KB | ES module import |
 | `dist/index.d.ts` | Types | — | TypeScript declarations |
 | `demo/anets-terminal.js` | IIFE | ~75KB | Demo bundle |
+
+## ✅ Recent Updates
+
+- **Color Support** — Full 16-color, 256-color (216-color cube + 24 grayscale), and true color (RGB) support
+- **Color Parsing Fix** — Fixed ANSI escape sequence parser to correctly recognize ESC character
+- **Default Colors** — Default foreground/background (39/49 codes) now resolve to theme colors instead of ANSI 7/0
+- **SGR Reset** — Reset codes (0) properly initialize to theme defaults
 
 ## 📄 License
 
