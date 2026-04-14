@@ -2,7 +2,7 @@
 
 **An embeddable, zero-dependency web-based terminal emulator** with Canvas rendering, full ANSI color support (16-color, 256-color, true color), scrollback, mouse selection, cursor styles, and an xterm.js-compatible API.
 
-![Terminal Screenshot](docs/images/terminal-demo.svg)
+![Terminal Screenshot](anets-xterm.png)
 *AnetsTerminal rendering 16-color, 256-color, and true color gradients.*
 
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![Size](https://img.shields.io/badge/bundle-75KB-orange) ![License](https://img.shields.io/badge/license-MIT-green)
