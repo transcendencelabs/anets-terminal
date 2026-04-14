@@ -2,7 +2,10 @@
 
 **An embeddable, zero-dependency web-based terminal emulator** with Canvas rendering, full ANSI color support (16-color, 256-color, true color), scrollback, mouse selection, cursor styles, and an xterm.js-compatible API.
 
-![Terminal Demo](https://img.shields.io/badge/zero--dependencies-yes-green) ![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![Size](https://img.shields.io/badge/bundle-75KB-orange)
+![Terminal Screenshot](docs/images/terminal-demo.svg)
+*AnetsTerminal rendering 16-color, 256-color, and true color gradients.*
+
+![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue) ![Size](https://img.shields.io/badge/bundle-75KB-orange) ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## ✨ Features
 
@@ -61,45 +64,49 @@
 - Dracula
 - Custom themes via `mergeTheme()` or partial theme objects
 
-## 📦 Installation
+## 🚀 Quick Start
+
+### 1. Install
 
 ```bash
 npm install anets-terminal
 ```
 
-## 🚀 Quick Start
-
-### ES Module
+### 2. Create a terminal
 
 ```typescript
-import { AnetsTerminal, TerminalEvent } from 'anets-terminal';
+import { AnetsTerminal } from 'anets-terminal';
 
 const term = new AnetsTerminal({
   cols: 80,
   rows: 24,
   cursorBlink: true,
-  theme: { background: '#1e1e2e', foreground: '#cdd6f4' }
 });
 
 term.open(document.getElementById('terminal'));
 term.write('\x1b[32mHello, World!\x1b[0m\r\n');
 
+// Handle user input
 term.on(TerminalEvent.Data, (data) => {
   console.log('User typed:', data);
-  // Send to your backend
-  websocket.send(data);
 });
 ```
 
-### CDN / Script Tag
+### 3. Connect to a backend
 
-```html
-<script src="anets-terminal.js"></script>
-<script>
-  const term = new AnetsTerminal.AnetsTerminal({ cols: 80, rows: 24 });
-  term.open(document.getElementById('terminal'));
-  term.write('\x1b[32mHello!\x1b[0m\r\n');
-</script>
+```typescript
+import { attachWebSocket } from 'anets-terminal';
+
+// Quick WebSocket connection
+const backend = attachWebSocket(term, 'ws://localhost:8080');
+```
+
+That's it! See [HOWTO guides](docs/HOWTO/) for detailed use cases.
+
+## 📦 Installation
+
+```bash
+npm install anets-terminal
 ```
 
 ## 🎨 Color Usage
@@ -185,10 +192,6 @@ term.setFont('JetBrains Mono');
 
 // Change font family and size
 term.setFont('Consolas', 18);
-
-// Use the font shell command in the demo
-// Type: font Consolas 16
-// Type: font "Fira Code" 14
 ```
 
 ## 📜 Scrollbar & Scrolling
@@ -197,7 +200,7 @@ term.setFont('Consolas', 18);
 
 ```javascript
 const term = new AnetsTerminal({
-  showScrollbar: true,  // false by default
+  showScrollbar: true,
 });
 term.open(document.getElementById('terminal'));
 ```
@@ -206,26 +209,15 @@ term.open(document.getElementById('terminal'));
 
 ```javascript
 const term = new AnetsTerminal({
-  enableMouseScroll: true,  // true by default - scroll with mousewheel
-});
-term.open(document.getElementById('terminal'));
-
-// To disable mousewheel scrolling:
-const noScroll = new AnetsTerminal({
-  enableMouseScroll: false,  // disable mousewheel scroll
+  enableMouseScroll: true,  // true by default
 });
 ```
 
 ### Programmatic Scrolling
 
 ```javascript
-// Scroll to a specific offset
-term.scrollTo(10);
-
-// Scroll to bottom
-term.scrollToBottom();
-
-// Get current scroll offset
+term.scrollTo(10);      // Scroll to offset
+term.scrollToBottom();  // Scroll to bottom
 const offset = term.scrollOffset;
 ```
 
@@ -253,24 +245,6 @@ term.setTheme({
   cursor: '#f5e0dc',
   green: '#a6e3a1',
   red: '#f38ba8',
-});
-
-// Full theme object
-term.setTheme({
-  background: '#0d1117',
-  foreground: '#c9d1d9',
-  cursor: '#58a6ff',
-  cursorAccent: '#0d1117',
-  selectionBackground: '#264f78',
-  selectionForeground: '#c9d1d9',
-  black: '#0d1117',   red: '#ff7b72',
-  green: '#7ee787',   yellow: '#e3b341',
-  blue: '#58a6ff',    magenta: '#d2a8ff',
-  cyan: '#79c0ff',    white: '#c9d1d9',
-  brightBlack: '#484f58',  brightRed: '#ffa198',
-  brightGreen: '#56d364', brightYellow: '#e3b341',
-  brightBlue: '#58a6ff',  brightMagenta: '#d2a8ff',
-  brightCyan: '#79c0ff',  brightWhite: '#f0f6fc',
 });
 ```
 
@@ -308,7 +282,7 @@ class MySSHBackend extends BaseBackend {
   protected onAttach(): void {
     this.sshConnection = createSSHConnection('user@host');
     this.sshConnection.onOutput((output: string) => {
-      this.write(output);  // Send to terminal
+      this.write(output);
     });
   }
 
@@ -324,23 +298,6 @@ const backend = new MySSHBackend();
 backend.attach(term);
 ```
 
-### HTTP Polling
-
-```javascript
-const term = new AnetsTerminal();
-term.open(container);
-
-term.on(TerminalEvent.Data, (data) => {
-  fetch('/api/terminal/input', { method: 'POST', body: data });
-});
-
-setInterval(async () => {
-  const res = await fetch('/api/terminal/output');
-  const data = await res.text();
-  term.write(data);
-}, 50);
-```
-
 ## 📋 API Reference
 
 ### Constructor Options
@@ -349,8 +306,8 @@ setInterval(async () => {
 |---|---|---|---|
 | `cols` | `number` | `80` | Number of columns |
 | `rows` | `number` | `24` | Number of rows |
-| `fontFamily` | `string` | `'Courier New, Courier, monospace'` | Font family |
-| `fontSize` | `number` | `15` | Font size in pixels |
+| `fontFamily` | `string` | `'Ubuntu Mono, Consolas, monospace'` | Font family |
+| `fontSize` | `number` | `13` | Font size in pixels |
 | `lineHeight` | `number` | `1.2` | Line height multiplier |
 | `letterSpacing` | `number` | `0` | Letter spacing in pixels |
 | `scrollback` | `number` | `1000` | Scrollback buffer lines |
@@ -358,7 +315,7 @@ setInterval(async () => {
 | `cursorStyle` | `'block'\|'underline'\|'bar'` | `'block'` | Cursor style |
 | `cursorBlink` | `boolean` | `true` | Cursor blink |
 | `focusOnOpen` | `boolean` | `false` | Focus on open |
-| `wordSeparators` | `string` | `' ()[]{}\'"` | Word boundary characters |
+| `wordSeparators` | `string` | `' ()[]{}'"'` | Word boundary characters |
 | `showScrollbar` | `boolean` | `false` | Show scrollbar on the right |
 | `enableMouseScroll` | `boolean` | `true` | Enable scrolling with mousewheel |
 
@@ -381,8 +338,6 @@ setInterval(async () => {
 | `dispose()` | Clean up and remove from DOM |
 | `setTheme(theme)` | Set color theme (partial or full) |
 | `setFont(family?, size?)` | Change font at runtime |
-| `scrollTo(offset)` | Scroll to scrollback position |
-| `scrollToBottom()` | Scroll to bottom |
 | `getSelection()` | Get selected text |
 | `clearSelection()` | Clear selection |
 
@@ -416,14 +371,14 @@ setInterval(async () => {
 
 ## 🎮 Interactive Demo
 
-Open `demo/index.html` in a browser to see an interactive terminal with a simulated shell. The demo includes:
+Open `demo/index.html` in a browser to see an interactive terminal with a simulated shell.
 
 | Command | Description |
 |---|---|
 | `help` | Show all available commands |
-| `color` | Full color demo (16-color, 256-color, true color, combos) |
+| `color` | Full color demo (16-color, 256-color, true color) |
 | `colors` | Basic color palette |
-| `font <family> [size]` | Change font at runtime (e.g., `font Consolas 16`) |
+| `font <family> [size]` | Change font at runtime |
 | `banner` | ASCII art banner |
 | `neofetch` | System info display |
 | `cowsay <text>` | Cowsay! |
@@ -438,13 +393,9 @@ Open `demo/index.html` in a browser to see an interactive terminal with a simula
 
 **UI Buttons:**
 - 🎨 **Theme selector** — Switch between Default, One Dark, Solarized Dark, Dracula
-- 🅰️ **Font Demo** — Shows all text styles (bold, italic, underline, etc.) and special chars
-- 🌈 **Color Demo** — Complete color showcase with gradients and combinations
-- 📐 **Resize** — Toggle between 40×12 and 80×24
-
-### Simple Test Demo
-
-For a minimal color test, open `test-colors.html` to verify basic color rendering works correctly.
+- 🅰️ **Font Demo** — Shows all text styles
+- 🌈 **Color Demo** — Complete color showcase
+- 📐 **Resize** — Toggle between sizes
 
 ## 🏗️ Architecture
 
@@ -495,13 +446,6 @@ npm run typecheck
 | `dist/index.d.ts` | Types | — | TypeScript declarations |
 | `demo/anets-terminal.js` | IIFE | ~75KB | Demo bundle |
 
-## ✅ Recent Updates
-
-- **Color Support** — Full 16-color, 256-color (216-color cube + 24 grayscale), and true color (RGB) support
-- **Color Parsing Fix** — Fixed ANSI escape sequence parser to correctly recognize ESC character
-- **Default Colors** — Default foreground/background (39/49 codes) now resolve to theme colors instead of ANSI 7/0
-- **SGR Reset** — Reset codes (0) properly initialize to theme defaults
-
 ## 📄 License
 
-MIT
+MIT — see [LICENSE](LICENSE)

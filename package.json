@@ -5,15 +5,44 @@
   "main": "dist/anets-terminal.js",
   "module": "dist/anets-terminal.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/anets-terminal.mjs",
+      "require": "./dist/anets-terminal.js"
+    }
+  },
+  "files": [
+    "dist/",
+    "docs/"
+  ],
   "scripts": {
     "build": "esbuild src/index.ts --bundle --outfile=dist/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap && esbuild src/index.ts --bundle --outfile=dist/anets-terminal.mjs --format=esm --sourcemap && tsc --emitDeclarationOnly",
     "build:demo": "esbuild src/index.ts --bundle --outfile=demo/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap",
     "dev": "esbuild src/index.ts --bundle --outfile=demo/anets-terminal.js --format=iife --global-name=AnetsTerminal --sourcemap --watch",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["terminal", "emulator", "xterm", "web", "embeddable", "ansi", "canvas"],
-  "author": "",
+  "keywords": [
+    "terminal",
+    "emulator",
+    "xterm",
+    "web",
+    "embeddable",
+    "ansi",
+    "canvas",
+    "typescript",
+    "zero-dependencies"
+  ],
+  "author": "Transcendence Labs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/transcendencelabs/anets-terminal.git"
+  },
+  "homepage": "https://github.com/transcendencelabs/anets-terminal#readme",
+  "bugs": {
+    "url": "https://github.com/transcendencelabs/anets-terminal/issues"
+  },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "esbuild": "^0.25.2",
