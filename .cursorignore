@@ -1,0 +1,28 @@
+# AI/Agent cursor rules - ignore files that agents should not read
+# to conserve tokens and prevent mistakes
+
+# Build artifacts
+dist/
+demo/anets-terminal.js
+demo/anets-terminal.js.map
+
+# Dependencies
+node_modules/
+
+# Package management
+package-lock.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Maps and debugging
+*.map
+
+# Generated files
+*.d.ts
+*.d.ts.map
