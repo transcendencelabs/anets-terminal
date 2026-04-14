@@ -45,3 +45,6 @@ export {
 
 // Backend connectors
 export { WebSocketBackend, BaseBackend, attachWebSocket } from './Backend';
+
+// Popular fonts
+export { POPULAR_MONOSPACE_FONTS, FONT_CATALOG } from './PopularFonts';

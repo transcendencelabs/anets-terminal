@@ -109,20 +109,45 @@ export class Buffer {
     return { x: this._savedCursorX, y: this._savedCursorY };
   }
 
-  /** Get a cell at position */
+  /** Get a cell at position considering scroll offset */
   getCell(x: number, y: number): CharCell {
+    // Apply scroll offset
+    const effectiveY = y - this._scrollOffset;
+    
+    if (effectiveY < 0) {
+      // Line is in scrollback
+      const scrollbackIndex = this._scrollback.length - this._scrollOffset + y;
+      if (scrollbackIndex >= 0 && scrollbackIndex < this._scrollback.length && x >= 0 && x < this.cols) {
+        return this._scrollback[scrollbackIndex][x];
+      }
+      return createBlankCell();
+    }
+    
     if (y < 0 || y >= this.rows || x < 0 || x >= this.cols) {
       return createBlankCell();
     }
-    return this._lines[y][x];
+    return this._lines[effectiveY][x];
   }
 
-  /** Get a complete line */
+  /** Get a complete line considering scroll offset */
   getLine(y: number): CharCell[] {
-    if (y < 0 || y >= this.rows) {
+    // Apply scroll offset: lines from scrollback are shown first when scrolled up
+    const effectiveY = y - this._scrollOffset;
+    
+    if (effectiveY < 0) {
+      // This line is in scrollback (visible when scrolled up)
+      const scrollbackIndex = this._scrollback.length - this._scrollOffset + y;
+      if (scrollbackIndex >= 0 && scrollbackIndex < this._scrollback.length) {
+        return this._scrollback[scrollbackIndex];
+      }
       return this._createBlankLine();
     }
-    return this._lines[y];
+    
+    if (effectiveY >= this.rows) {
+      return this._createBlankLine();
+    }
+    
+    return this._lines[effectiveY];
   }
 
   /** Set a cell at position */
@@ -303,6 +328,12 @@ export class Buffer {
   scrollTo(offset: number): void {
     const maxOffset = this._scrollback.length;
     this._scrollOffset = Math.max(0, Math.min(offset, maxOffset));
+    
+    // When scrolling, clamp cursor to visible area
+    // (cursor should stay visible when scrolling through scrollback)
+    if (this._scrollOffset > 0) {
+      // If cursor would be off-screen due to scroll, it will be handled by getLine/getCell
+    }
   }
 
   /** Get a scrollback line */

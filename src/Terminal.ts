@@ -9,8 +9,8 @@ import { mergeTheme, DEFAULT_THEME } from './Theme';
 const DEFAULT_OPTIONS: Required<TerminalOptions> = {
   cols: 80,
   rows: 24,
-  fontFamily: 'Courier New, Courier, monospace',
-  fontSize: 15,
+  fontFamily: 'Ubuntu Mono, Consolas, Courier New, monospace',
+  fontSize: 13,
   lineHeight: 1.2,
   letterSpacing: 0,
   scrollback: 1000,
@@ -153,6 +153,7 @@ export class AnetsTerminal {
       this._scrollbar.style.height = '100%';
       this._scrollbar.style.backgroundColor = '#333';
       this._scrollbar.style.overflow = 'hidden';
+      this._scrollbar.style.zIndex = '100';
       
       const thumb = document.createElement('div');
       thumb.style.position = 'absolute';
@@ -161,9 +162,13 @@ export class AnetsTerminal {
       thumb.style.borderRadius = '6px';
       thumb.style.cursor = 'pointer';
       thumb.style.transition = 'background-color 0.2s';
+      thumb.dataset.isDragging = 'false';
       
       this._scrollbar.appendChild(thumb);
       container.appendChild(this._scrollbar);
+      
+      // Make scrollbar interactive
+      this._attachScrollbarListeners();
       
       // Update scrollbar on scroll
       this._updateScrollbar();
@@ -407,6 +412,7 @@ export class AnetsTerminal {
     const totalLines = this._buffer.scrollbackLength + this._buffer.rows;
     const visibleLines = this._buffer.rows;
     const scrollOffset = this._buffer.scrollOffset;
+    const maxScroll = totalLines - visibleLines;
 
     if (totalLines <= visibleLines) {
       // No scrolling needed
@@ -415,11 +421,93 @@ export class AnetsTerminal {
     } else {
       const scrollbarHeight = this._scrollbar.clientHeight;
       const thumbHeight = (visibleLines / totalLines) * scrollbarHeight;
-      const thumbTop = (scrollOffset / (totalLines - visibleLines)) * (scrollbarHeight - thumbHeight);
+      // Invert: scrollOffset=0 (bottom/latest) -> thumb at top, scrollOffset=max (top/oldest) -> thumb at bottom
+      const thumbTop = (1 - scrollOffset / maxScroll) * (scrollbarHeight - thumbHeight);
       
       thumb.style.height = `${Math.max(20, thumbHeight)}px`;
       thumb.style.top = `${thumbTop}px`;
     }
+  }
+
+  /** Attach scrollbar event listeners */
+  private _attachScrollbarListeners(): void {
+    if (!this._scrollbar) return;
+    
+    const thumb = this._scrollbar.querySelector('div') as HTMLDivElement;
+    if (!thumb) return;
+
+    let isDragging = false;
+    let startY = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // Only left click
+      isDragging = true;
+      startY = e.clientY;
+      thumb.style.backgroundColor = '#999';
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return;
+
+      const scrollbar = this._scrollbar!;
+      const delta = e.clientY - startY;
+      const scrollbarHeight = scrollbar.clientHeight;
+      const thumbHeight = parseInt(thumb.style.height);
+      const maxThumbTop = scrollbarHeight - thumbHeight;
+      
+      let newThumbTop = parseInt(thumb.style.top) + delta;
+      newThumbTop = Math.max(0, Math.min(newThumbTop, maxThumbTop));
+
+      const totalLines = this._buffer.scrollbackLength + this._buffer.rows;
+      const visibleLines = this._buffer.rows;
+      const maxScroll = totalLines - visibleLines;
+      // Invert: thumb at top = offset 0 (latest), thumb at bottom = max offset (oldest)
+      const newOffset = Math.round((1 - newThumbTop / maxThumbTop) * maxScroll);
+
+      this._buffer.scrollTo(newOffset);
+      this._renderer?.setScrollOffset(this._buffer.scrollOffset);
+      this._renderer?.markDirty();
+      this._renderer?.scheduleRender();
+      this._updateScrollbar();
+
+      startY = e.clientY;
+    };
+
+    const handleMouseUp = () => {
+      isDragging = false;
+      thumb.style.backgroundColor = '#666';
+    };
+
+    const handleScrollbarClick = (e: MouseEvent) => {
+      if (isDragging) return;
+      if (e.target === thumb) return; // Don't handle thumb clicks here
+
+      const scrollbar = this._scrollbar!;
+      const rect = scrollbar.getBoundingClientRect();
+      const clickY = e.clientY - rect.top;
+      const thumbHeight = parseInt(thumb.style.height);
+      const scrollbarHeight = scrollbar.clientHeight;
+      const thumbTop = parseInt(thumb.style.top);
+
+      // Click above or below thumb - invert for correct direction
+      const totalLines = this._buffer.scrollbackLength + this._buffer.rows;
+      const visibleLines = this._buffer.rows;
+      const maxScroll = totalLines - visibleLines;
+      // Invert: clicking at top (y=0) should show latest (offset=0)
+      const clickOffset = Math.round((1 - clickY / scrollbarHeight) * maxScroll);
+
+      this._buffer.scrollTo(Math.max(0, Math.min(clickOffset, maxScroll)));
+      this._renderer?.setScrollOffset(this._buffer.scrollOffset);
+      this._renderer?.markDirty();
+      this._renderer?.scheduleRender();
+      this._updateScrollbar();
+    };
+
+    thumb.addEventListener('mousedown', handleMouseDown);
+    this._scrollbar.addEventListener('click', handleScrollbarClick);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   }
 
   /** Dispose of the terminal and clean up resources */

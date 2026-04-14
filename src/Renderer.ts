@@ -287,10 +287,21 @@ export class Renderer {
     const start = this._selection.start;
     const end = this._selection.end;
 
-    if (start.y < end.y || (start.y === end.y && start.x <= end.x)) {
-      return { start, end };
+    // Clamp coordinates to valid buffer bounds
+    const clamp = (val: number, max: number) => Math.max(0, Math.min(val, max - 1));
+    const clampedStart = {
+      x: clamp(start.x, this._buffer.cols),
+      y: clamp(start.y, this._buffer.rows),
+    };
+    const clampedEnd = {
+      x: clamp(end.x, this._buffer.cols),
+      y: clamp(end.y, this._buffer.rows),
+    };
+
+    if (clampedStart.y < clampedEnd.y || (clampedStart.y === clampedEnd.y && clampedStart.x <= clampedEnd.x)) {
+      return { start: clampedStart, end: clampedEnd };
     }
-    return { start: end, end: start };
+    return { start: clampedEnd, end: clampedStart };
   }
 
   /** Render the cursor */
