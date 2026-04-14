@@ -1,6 +1,6 @@
 {
   "name": "anets-terminal",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "An embeddable web-based terminal emulator with xterm.js-like features",
   "main": "dist/anets-terminal.js",
   "module": "dist/anets-terminal.mjs",
@@ -37,7 +37,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/transcendencelabs/anets-terminal.git"
+    "url": "git+https://github.com/transcendencelabs/anets-terminal.git"
   },
   "homepage": "https://github.com/transcendencelabs/anets-terminal#readme",
   "bugs": {

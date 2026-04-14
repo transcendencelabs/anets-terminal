@@ -191,10 +191,12 @@ export class Renderer {
         const cell = line[col];
         const x = col * cellWidth;
 
-        // Draw background
-        const bgColor = this._resolveColor(cell.bg, true);
-        ctx.fillStyle = bgColor;
-        ctx.fillRect(x, y, cellWidth * cell.width, cellHeight);
+        // Draw background only if a non-default color is set
+        if (cell.bg !== -1) {
+          const bgColor = this._resolveColor(cell.bg, true);
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(x, y, cellWidth * cell.width, cellHeight);
+        }
 
         // Draw the character
         if (cell.char && cell.char !== ' ') {
