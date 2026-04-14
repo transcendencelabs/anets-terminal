@@ -13,6 +13,7 @@ const DEFAULT_OPTIONS: Required<TerminalOptions> = {
   fontSize: 13,
   lineHeight: 1.2,
   letterSpacing: 0,
+  padding: 4,
   scrollback: 1000,
   theme: {},
   cursorStyle: 'block',
@@ -183,6 +184,7 @@ export class AnetsTerminal {
       this._options.fontSize,
       this._options.lineHeight,
       this._options.letterSpacing,
+      this._options.padding,
     );
 
     // Resize canvas to match buffer

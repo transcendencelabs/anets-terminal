@@ -135,6 +135,8 @@ export interface TerminalOptions {
   lineHeight?: number;
   /** Letter spacing in pixels (default: 0) */
   letterSpacing?: number;
+  /** Padding inside the terminal (default: 4px) */
+  padding?: number;
   /** Scrollback buffer size (default: 1000) */
   scrollback?: number;
   /** Theme colors */

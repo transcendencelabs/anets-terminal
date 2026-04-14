@@ -22,6 +22,7 @@ export class Renderer {
   private _fontSize: number;
   private _lineHeight: number;
   private _letterSpacing: number;
+  private _padding: number;
   private _charMetrics: CharMetrics = { width: 0, height: 0, baseline: 0 };
   private _devicePixelRatio: number;
   private _cursor: CursorState;
@@ -40,15 +41,17 @@ export class Renderer {
     fontSize: number,
     lineHeight: number,
     letterSpacing: number,
+    padding: number,
   ) {
     this._canvas = canvas;
-    this._ctx = canvas.getContext('2d', { alpha: false })!;
+    this._ctx = canvas.getContext('2d', { alpha: true })!;
     this._buffer = buffer;
     this._theme = theme;
     this._fontFamily = fontFamily;
     this._fontSize = fontSize;
     this._lineHeight = lineHeight;
     this._letterSpacing = letterSpacing;
+    this._padding = padding;
     this._devicePixelRatio = window.devicePixelRatio || 1;
     this._cursor = {
       x: 0,
@@ -90,11 +93,12 @@ export class Renderer {
     return { ...this._charMetrics };
   }
 
-  /** Get the pixel dimensions of the terminal */
+  /** Get the pixel dimensions of the terminal (including padding) */
   get dimensions(): { width: number; height: number; cellWidth: number; cellHeight: number } {
+    const pad = this._padding;
     return {
-      width: this._buffer.cols * this._charMetrics.width,
-      height: this._buffer.rows * this._charMetrics.height,
+      width: this._buffer.cols * this._charMetrics.width + pad * 2,
+      height: this._buffer.rows * this._charMetrics.height + pad * 2,
       cellWidth: this._charMetrics.width,
       cellHeight: this._charMetrics.height,
     };
@@ -124,11 +128,12 @@ export class Renderer {
     this._dirty = true;
   }
 
-  /** Resize the canvas to match the buffer dimensions */
+  /** Resize the canvas to match the buffer dimensions (including padding) */
   resize(cols: number, rows: number): void {
     this._devicePixelRatio = window.devicePixelRatio || 1;
-    const width = cols * this._charMetrics.width;
-    const height = rows * this._charMetrics.height;
+    const pad = this._padding;
+    const width = cols * this._charMetrics.width + pad * 2;
+    const height = rows * this._charMetrics.height + pad * 2;
 
     this._canvas.width = width * this._devicePixelRatio;
     this._canvas.height = height * this._devicePixelRatio;
@@ -144,11 +149,15 @@ export class Renderer {
     const ctx = this._ctx;
     const { width, height, cellWidth, cellHeight } = this.dimensions;
 
-    // Clear with background color
-    ctx.fillStyle = this._theme.background;
-    ctx.fillRect(0, 0, width, height);
+    // Clear canvas (transparent if background is 'transparent')
+    if (this._theme.background !== 'transparent') {
+      ctx.fillStyle = this._theme.background;
+      ctx.fillRect(0, 0, width, height);
+    } else {
+      ctx.clearRect(0, 0, width, height);
+    }
 
-    // Draw buffer content
+    // Draw buffer content with padding offset
     this._renderBuffer(ctx, cellWidth, cellHeight);
 
     // Draw selection
@@ -179,17 +188,18 @@ export class Renderer {
   private _renderBuffer(ctx: CanvasRenderingContext2D, cellWidth: number, cellHeight: number): void {
     const buffer = this._buffer;
     const scrollOffset = this._scrollOffset;
+    const pad = this._padding;
 
     for (let row = 0; row < buffer.rows; row++) {
       // Determine the actual buffer line (accounting for scroll offset)
       const bufferRow = row;
       const line = buffer.getLine(bufferRow);
-      const y = row * cellHeight;
+      const y = row * cellHeight + pad;
 
       let col = 0;
       while (col < buffer.cols) {
         const cell = line[col];
-        const x = col * cellWidth;
+        const x = col * cellWidth + pad;
 
         // Draw background only if a non-default color is set
         if (cell.bg !== -1) {
@@ -252,8 +262,8 @@ export class Renderer {
     if (start.y === end.y) {
       // Same line selection
       ctx.fillRect(
-        start.x * cellWidth,
-        start.y * cellHeight,
+        start.x * cellWidth + this._padding,
+        start.y * cellHeight + this._padding,
         (end.x - start.x + 1) * cellWidth,
         cellHeight,
       );
@@ -261,19 +271,19 @@ export class Renderer {
       // Multi-line selection
       // First line
       ctx.fillRect(
-        start.x * cellWidth,
-        start.y * cellHeight,
+        start.x * cellWidth + this._padding,
+        start.y * cellHeight + this._padding,
         (this._buffer.cols - start.x) * cellWidth,
         cellHeight,
       );
       // Middle lines
       for (let row = start.y + 1; row < end.y; row++) {
-        ctx.fillRect(0, row * cellHeight, this._buffer.cols * cellWidth, cellHeight);
+        ctx.fillRect(this._padding, row * cellHeight + this._padding, this._buffer.cols * cellWidth, cellHeight);
       }
       // Last line
       ctx.fillRect(
-        0,
-        end.y * cellHeight,
+        this._padding,
+        end.y * cellHeight + this._padding,
         (end.x + 1) * cellWidth,
         cellHeight,
       );
@@ -310,8 +320,8 @@ export class Renderer {
   private _renderCursor(ctx: CanvasRenderingContext2D, cellWidth: number, cellHeight: number): void {
     if (!this._cursorBlinkState && this._cursor.blink) return;
 
-    const x = this._cursor.x * cellWidth;
-    const y = this._cursor.y * cellHeight;
+    const x = this._cursor.x * cellWidth + this._padding;
+    const y = this._cursor.y * cellHeight + this._padding;
 
     ctx.save();
 
@@ -467,8 +477,8 @@ export class Renderer {
   /** Convert pixel coordinates to buffer cell coordinates */
   pixelToCell(px: number, py: number): { col: number; row: number } {
     return {
-      col: Math.floor(px / this._charMetrics.width),
-      row: Math.floor(py / this._charMetrics.height),
+      col: Math.floor((px - this._padding) / this._charMetrics.width),
+      row: Math.floor((py - this._padding) / this._charMetrics.height),
     };
   }
 }
